@@ -1,3 +1,3 @@
- 안녕/NNG+하/NNG+세/NNB+요/EC 
- 너/NP+를/JKO 사/NNG+랑/JKB+해/NNG+!/SF 
- 우리/NP+집/NNG+에/JKB 왜/MAG 오/VV+아/EC+ㅆ/EP+니/EF+?/SF 
+ 안녕/IC+하/VV+세/VV+요/EC 
+ 너르/VA+ㄹ/ETM 사랑/NNG+해/NNG+!/SF 
+ 우리/NP+집/NNG+에/JKB 왜/MAG 와/VV+ㅆ/EP+니/EF+?/SF 

@@ -18,7 +18,7 @@ public class State {
 	/**
 	 * 품사 리스트
 	 */
-	private ArrayList<PosPair> posList = null;
+	private ArrayList<Pos> posList = null;
 	
 	/**
 	 * 선택된 optimal pos index
@@ -27,19 +27,19 @@ public class State {
 	
 	public State(String morpheme) {
 		this.morpheme = morpheme;
-		this.posList = new ArrayList<PosPair>();
+		this.posList = new ArrayList<Pos>();
 	}
 	
-	public PosPair getOptimalPos() {
+	public Pos getOptimalPos() {
 		return getPosList().get(optimal);
 	}
 	
-	public void addPosPair(String str) {
-		PosPair pair = new PosPair(str);
-		posList.add(pair);
+	public void addPos(String str) {
+		Pos pos = new Pos(str);
+		posList.add(pos);
 	}
 	
-	public ArrayList<PosPair> getPosList() {
+	public ArrayList<Pos> getPosList() {
 		return posList;
 	}
 	

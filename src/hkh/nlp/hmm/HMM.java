@@ -11,7 +11,7 @@ public class HMM {
 	private ArrayList<State> states = null;
 	private ArrayList<CorpusEntry> corpus = null;
 	private int[] backtrace = null;
-	private int V = 0;
+	private int V_lex = 0;
 	
 	public HMM() {
 		this.states = new ArrayList<State>();
@@ -24,7 +24,7 @@ public class HMM {
 	public void setNetwork(ArrayList<String> morphemes) {
 		// 시작상태 생성
 		State state = new State(State.START);
-		state.addPosPair("");
+		state.addPos("");
 		states.add(state);
 		
 		for (int i=0; i<morphemes.size(); i++) {
@@ -40,7 +40,7 @@ public class HMM {
 			
 			} else {
 				// 품사추가
-				state.addPosPair(splits[1]);
+				state.addPos(splits[1]);
 			}
 		}
 		
@@ -49,11 +49,11 @@ public class HMM {
 	
 	public void setCorpus(ArrayList<CorpusEntry> corpus) {
 		this.corpus = corpus;
-		Set<String> distinctSet = new HashSet<String>();
+		Set<String> lexSet = new HashSet<String>();
 		for (CorpusEntry entry : corpus) {
-			distinctSet.add(entry.pos);
+			lexSet.add(entry.lex);
 		}
-		V = distinctSet.size();
+		V_lex = lexSet.size();
 		setObservationProb(corpus);
 	}
 	
@@ -65,12 +65,12 @@ public class HMM {
 			State before = states.get(i-1);
 			calcTrainsitionProbability(corpus, before.getOptimalPos(), state);
 			
-			ArrayList<PosPair> posList = state.getPosList();
+			ArrayList<Pos> posList = state.getPosList();
 			double maximum = -1*Float.MAX_VALUE;
 			int optimalIndex = 0;
 			for (int j=0; j<posList.size(); j++) {
-				PosPair pos = posList.get(j);
-				double prob = Math.log10(pos.observationProb)+Math.log10(pos.transitionProb);
+				Pos pos = posList.get(j);
+				double prob = pos.observationProb+pos.transitionProb;
 				if (prob > maximum) {
 					maximum = prob;
 					optimalIndex = j;
@@ -88,9 +88,8 @@ public class HMM {
 	public void setObservationProb(ArrayList<CorpusEntry> corpus) {
 		for (State state : states) {
 			for (int i=0; i<state.getPosList().size(); i++) {
-				PosPair pair = state.getPosList().get(i);
-				String pos = Util.getPosSequence(pair.name);
-				calcObservationProbability(corpus, pair, pos);
+				Pos pos = state.getPosList().get(i);
+				calcObservationProbability(corpus, pos);
 			}
 		}
 	}
@@ -98,62 +97,102 @@ public class HMM {
 	/**
 	 * Observation 확률계산
 	 * @param corpus
-	 * @param pair
 	 * @param pos
 	 * @return
 	 */
-	private double calcObservationProbability(ArrayList<CorpusEntry> corpus, PosPair pair, String pos) {
+	private void calcObservationProbability(ArrayList<CorpusEntry> corpus, Pos pos) {
 		double prob = 0f;
-		int L = 0; 		// L 개수
-		int W = 0;		// (W, L) 조합개수
 		
-		for (CorpusEntry corpusEntry : corpus) {
-			if (Util.equals(corpusEntry.posPair, pair.name)) {
-				W++;
-			}
-			if (Util.equals(corpusEntry.pos, pos)) {
-				L++;
-			}
-		}
-		
-		// laplace smoothing
-		pair.observationProb = (W+1)/(double)(L+V);
-		System.out.println(String.format("%s: (%d/%d) = %.8f", pair.name, (W+1), (L+V), pair.observationProb));
-		
-		return prob;
-	}
-	
-	/**
-	 * 
-	 * @param corpus
-	 * @param before	bigram 첫 번째 state
-	 * @param state		bigram 두 번째 state
-	 * @param posPair
-	 * @return
-	 */
-	private double calcTrainsitionProbability(ArrayList<CorpusEntry> corpus, PosPair optimalPOS, State state) {
-		double prob = 0f;
-		int L_bigram = 0; 	// C(Wn-1 Wn)
-		int L_unigram = 0;	// C(Wn-1)
-		
-		ArrayList<PosPair> posList = state.getPosList();
-		for (PosPair pair : posList) {
-			for (int i=0; i<corpus.size()-1; i++) {
-				String corpusPos1 = corpus.get(i).pos;
-				String corpusPos2 = corpus.get(i+1).pos;
-				if (Util.equals(optimalPOS.name, corpusPos1) && Util.equals(pair.name, corpusPos2)) {
-					L_bigram++;
-				}
-				if (Util.equals(optimalPOS.name, corpusPos1)) {
-					L_unigram++;
+		// 우리/NP+집/NNG+에/JKB
+		// 생성확률
+		String[] series = pos.name.split("[+]");
+		series = Util.removeEmpty(series);
+		for (String item : series) {
+			int index = item.indexOf('/');
+			int LW = 0; 		// L 개수
+			int L = 0;		// (W, L) 조합개수
+			double obProb = 0f;
+			String word = item.substring(0, index);
+			String lex = item.substring(index+1);
+			for (CorpusEntry entry : corpus) {
+				if (Util.equals(lex, entry.lex)) {
+					L++;
+					if (Util.equals(word, entry.word)) {
+						LW++;
+					}
 				}
 			}
 			// laplace smoothing
-			pair.transitionProb = (L_bigram+1)/(double)(L_unigram+V);
-			System.out.println(String.format("%s: (%d/%d) = %.8f", pair.name, L_bigram+1, L_unigram+V, pair.transitionProb));
+			obProb = (LW+1)/(double)(L+V_lex);
+			prob += Math.log10(obProb);
 		}
 		
-		return prob;
+		// 전이확률
+		for (int i=0; i<series.length-1; i++) {
+			double transitionProb = 0f;
+			String item1 = series[i];
+			String item2 = series[i+1];
+			String lex1 = item1.substring(item1.indexOf('/')+1);
+			String lex2 = item2.substring(item2.indexOf('/')+1);
+			int L1=0, L12 = 0;
+			for (int j=0; j<corpus.size()-1; j++) {
+				if (Util.equals(corpus.get(j).lex, lex1)) {
+					L1++;
+				}
+				if (Util.equals(corpus.get(j+1).lex, lex2)) {
+					L12++;
+				}
+			}
+			// laplace smoothing
+			transitionProb = (L12+1)/(double)(L1+V_lex);
+			prob += Math.log10(transitionProb);
+		}
+		System.out.println(String.format("생성확률 - %s: %f", pos.name, prob));
+		
+		pos.observationProb = prob;
+	}
+	
+	/**
+	 * 어절사이 전이확률 계산.
+	 * @param corpus
+	 * @param currentPos
+	 * @param state
+	 * @return
+	 */
+	private void calcTrainsitionProbability(ArrayList<CorpusEntry> corpus, Pos currentPos, State state) {
+		int L12 = 0;
+		int L1 = 0;
+		String lex1 = "";
+		
+		// currentPos - 우리/NP+집/NNG+에/JKB
+		String[] series1 = currentPos.name.split("[+]");
+		if (series1.length > 1) {
+			series1 = Util.removeEmpty(series1);
+			lex1 = series1[series1.length-1].split("/")[1];		// JKB
+		}
+		
+		ArrayList<Pos> posList = state.getPosList();
+		for (Pos nextPos : posList) {
+			// nextPos - 오/VV+아/EC+ㅆ/EC+니/EF+?/SF
+			// P(optimalPos|pos) 구해야 함
+			String[] series2 = nextPos.name.split("[+]");
+			series2 = Util.removeEmpty(series2);
+			String lex2 = series2[0].split("/")[1];					// VV
+			
+			for (int i=0; i<corpus.size()-1; i++) {
+				String corpusLex1 = corpus.get(i).lex;
+				String corpusLex2 = corpus.get(i+1).lex;
+				if (Util.equals(lex1, corpusLex1)) {
+					L1++;
+					if (Util.equals(lex2, corpusLex2)) {
+						L12++;
+					}
+				}
+			}
+			// laplace smoothing
+			nextPos.transitionProb = Math.log10((L12+1)/(double)(L1+V_lex));
+			System.out.println(String.format("전이확률 - %s: %.8f (%d/%d)", nextPos.name, nextPos.transitionProb, L12+V_lex, L1+1));
+		}
 	}
 	
 	public void printSolution() {

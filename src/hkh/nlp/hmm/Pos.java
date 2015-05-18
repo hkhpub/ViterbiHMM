@@ -1,26 +1,26 @@
 package hkh.nlp.hmm;
 
-import hkh.nlp.util.Util;
-
 /**
  * 품사 CLASS
  * @author hkh
  *
  */
-public class PosPair {
+public class Pos {
 	
 	public String name = null;
 	
-	public String pos = null;
 	/**
-	 * Observation Probability
+	 * Observation Probability - Log10 값
 	 */
 	public double observationProb = 0f;
+	
+	/**
+	 * Transition Probability - Log10 값
+	 */
 	public double transitionProb = 0f;
 	
-	public PosPair(String posPair) {
-		this.name = posPair;
-		this.pos = Util.getPosSequence(posPair);
+	public Pos(String name) {
+		this.name = name;
 	}
 	
 	@Override

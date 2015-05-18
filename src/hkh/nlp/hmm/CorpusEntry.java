@@ -15,12 +15,5 @@ public class CorpusEntry {
 	/**
 	 * 품사단어 조합 - 예: (결정/NNG+을/JKO)
 	 */
-	public String posPair = null;
-	
-	/**
-	 * 품사 - 예: (NNG+JKO)
-	 */
-	public String pos = "";
-	
-	
+	public String lex = null;
 }

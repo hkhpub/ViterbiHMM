@@ -67,7 +67,7 @@ public class Main {
 			if (line.length() == 0) {
 				entry.isBegin = true;
 				entry.word = "";
-				entry.posPair = "";
+				entry.lex = "";
 				corpus.add(entry);
 				continue;
 			}
@@ -75,13 +75,18 @@ public class Main {
 			if (splits.length != 2) {
 				continue;
 			}
-			entry.word = splits[0];
-			entry.posPair = splits[1];
-			entry.pos = Util.getPosSequence(entry.posPair);
-			
-			corpus.add(entry);
+			String[] series = splits[1].split("[+]");
+			for (String item : series) {
+				int index = item.indexOf('/');
+				if (index < 0) {
+					continue;
+				}
+				entry.word = item.substring(0, index);
+				entry.lex = item.substring(index+1);
+				corpus.add(entry);
+			}
 		}
-		System.out.println("Parsing corpus complete!");
+		System.out.println("Parsing corpus complete! corpus size: "+corpus.size());
 		return corpus;
 	}
 }
