@@ -1,7 +1,7 @@
 # ViterbiHMM
 HMM POS Tagging in java using viterbi algorithm 
 
-by hkh 2015-04-18
+by hkh 2015-05-18
 
 # 1. 실행 방법
 
@@ -29,11 +29,11 @@ by hkh 2015-04-18
 	
 		 어절별 상태 - "너를 사랑해" -> state0 (시작) - state1 (너를) - state2 (사랑해)
 	
-	3) PosPair.class
+	3) Pos.class
 	
 		특정 상태에 해당하는 품사조합
 		
-		생성확률, 전이확률, 품사조합(같은, VA+ETM), 품사(VA+ETM)
+		생성확률, 전이확률, 품사조합(같은, VA+ETM)
 	
 	4) 기타 자세한 사항은 프로그램에 주석처리로 명시했습니다. 
 
